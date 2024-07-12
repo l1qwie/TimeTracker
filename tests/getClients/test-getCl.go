@@ -9,8 +9,27 @@ import (
 	"github.com/l1qwie/TimeTracker/apptype"
 )
 
-// ?name=John&surname=Doe&patronymic=Andry&age=22
-//panic(fmt.Sprintf(`Expected: . Received: .`))
+// Отсылает запрос на сервер, принимает ответ и расшифровывает его
+func getReqInfo(query string) []*apptype.Client {
+	var clients []*apptype.Client
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8088/client%s", query))
+	if err != nil {
+		panic(err)
+	}
+	apptype.Debug.Println("Успешный запрос на сервер")
+	defer resp.Body.Close()
+	respbody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	apptype.Debug.Printf("Данные из ответа: %s", string(respbody))
+	err = json.Unmarshal([]byte(respbody), &clients)
+	if err != nil {
+		panic(err)
+	}
+	apptype.Debug.Println("Успешное декодирование ответа от сервера")
+	return clients
+}
 
 // Проверяет общие данные для этого запроса (создано по 3 клиента в бд для каждого варианта запроса)
 func checkForAll(cl []*apptype.Client) {
@@ -46,103 +65,85 @@ func checkForAll(cl []*apptype.Client) {
 	}
 }
 
-// Отсылает запрос на сервер, принимает ответ и расшифровывает его
-func getReqInfo(query string) []*apptype.Client {
-	var clients []*apptype.Client
-	resp, err := http.Get(fmt.Sprintf("http://localhost:8088/client%s", query))
-	if err != nil {
-		panic(err)
-	}
-	apptype.Debug.Println("Успешный запрос на сервер")
-	defer resp.Body.Close()
-	respbody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	apptype.Debug.Printf("Данные из ответа: %s", string(respbody))
-	err = json.Unmarshal([]byte(respbody), &clients)
-	if err != nil {
-		panic(err)
-	}
-	apptype.Debug.Println("Успешное декодирование ответа от сервера")
-	return clients
-}
-
+// Проверяет данные для запроса ИмяФамилияОтчествоВозраст
 func checkAnswersNSPA(cl []*apptype.Client) {
 	checkForAll(cl)
-	if cl[0].Name != "John" && cl[1].Name != "John" && cl[2].Name != "John" {
+	if cl[0].Name != "John" || cl[1].Name != "John" || cl[2].Name != "John" {
 		panic(fmt.Sprintf(`Expected: cl[0].Name = "John" && cl[1].Name = "John" && cl[2].Name = "John". 
 		Received: cl[0].Name = "%s" && cl[1].Name = "%s" && cl[2].Name = "%s".`, cl[0].Name, cl[1].Name, cl[2].Name))
 	}
-	if cl[0].Surname != "Doe" && cl[1].Surname != "Doe" && cl[2].Surname != "Doe" {
+	if cl[0].Surname != "Doe" || cl[1].Surname != "Doe" || cl[2].Surname != "Doe" {
 		panic(fmt.Sprintf(`Expected: cl[0].Surname = "Doe" && cl[1].Surname = "Doe" && cl[2].Surname = "Doe". 
 		Received: cl[0].Surname = "%s" && cl[1].Surname = "%s" && cl[2].Surname = "%s".`, cl[0].Surname, cl[1].Surname, cl[2].Surname))
 	}
-	if cl[0].Patronymic != "Andry" && cl[1].Patronymic != "Andry" && cl[2].Patronymic != "Andry" {
+	if cl[0].Patronymic != "Andry" || cl[1].Patronymic != "Andry" || cl[2].Patronymic != "Andry" {
 		panic(fmt.Sprintf(`Expected: cl[0].Patronymic = "Andry" && cl[1].Patronymic = "Andry" && cl[2].Patronymic = "Andry". 
 		Received: cl[0].Patronymic = "%s" && cl[1].Patronymic = "%s" && cl[2].Patronymic = "%s".`, cl[0].Patronymic, cl[1].Patronymic, cl[2].Patronymic))
 	}
-	if cl[0].Age != 22 && cl[1].Age != 22 && cl[2].Age != 22 {
+	if cl[0].Age != 22 || cl[1].Age != 22 || cl[2].Age != 22 {
 		panic(fmt.Sprintf(`Expected: cl[0].Age = 22 && cl[1].Age = 22 && cl[2].Age = 22. 
 		Received: cl[0].Age = %d && cl[1].Age = %d && cl[2].Age = %d.`, cl[0].Age, cl[1].Age, cl[2].Age))
 	}
 }
 
+// Проверяет данные для запроса ИмяФамилияОтчество
 func checkAnswersNSP(cl []*apptype.Client) {
 	checkForAll(cl)
-	if cl[0].Name != "John" && cl[1].Name != "John" && cl[2].Name != "John" {
+	if cl[0].Name != "John" || cl[1].Name != "John" || cl[2].Name != "John" {
 		panic(fmt.Sprintf(`Expected: cl[0].Name = "John" && cl[1].Name = "John" && cl[2].Name = "John". 
 		Received: cl[0].Name = "%s" && cl[1].Name = "%s" && cl[2].Name = "%s".`, cl[0].Name, cl[1].Name, cl[2].Name))
 	}
-	if cl[0].Surname != "Doe" && cl[1].Surname != "Doe" && cl[2].Surname != "Doe" {
+	if cl[0].Surname != "Doe" || cl[1].Surname != "Doe" || cl[2].Surname != "Doe" {
 		panic(fmt.Sprintf(`Expected: cl[0].Surname = "Doe" && cl[1].Surname = "Doe" && cl[2].Surname = "Doe". 
 		Received: cl[0].Surname = "%s" && cl[1].Surname = "%s" && cl[2].Surname = "%s".`, cl[0].Surname, cl[1].Surname, cl[2].Surname))
 	}
-	if cl[0].Patronymic != "Andry" && cl[1].Patronymic != "Andry" && cl[2].Patronymic != "Andry" {
+	if cl[0].Patronymic != "Andry" || cl[1].Patronymic != "Andry" || cl[2].Patronymic != "Andry" {
 		panic(fmt.Sprintf(`Expected: cl[0].Patronymic = "Andry" && cl[1].Patronymic = "Andry" && cl[2].Patronymic = "Andry". 
 		Received: cl[0].Patronymic = "%s" && cl[1].Patronymic = "%s" && cl[2].Patronymic = "%s".`, cl[0].Patronymic, cl[1].Patronymic, cl[2].Patronymic))
 	}
-	if cl[0].Age != 22 && cl[1].Age != 23 && cl[2].Age != 66 {
+	if cl[0].Age != 22 || cl[1].Age != 23 || cl[2].Age != 66 {
 		panic(fmt.Sprintf(`Expected: cl[0].Age = 22 && cl[1].Age = 23 && cl[2].Age = 66. 
 		Received: cl[0].Age = %d && cl[1].Age = %d && cl[2].Age = %d.`, cl[0].Age, cl[1].Age, cl[2].Age))
 	}
 }
 
+// Проверяет данные для запроса ИмяФамилия
 func checkAnswersNS(cl []*apptype.Client) {
 	checkForAll(cl)
-	if cl[0].Name != "John" && cl[1].Name != "John" && cl[2].Name != "John" {
+	if cl[0].Name != "John" || cl[1].Name != "John" || cl[2].Name != "John" {
 		panic(fmt.Sprintf(`Expected: cl[0].Name = "John" && cl[1].Name = "John" && cl[2].Name = "John". 
 		Received: cl[0].Name = "%s" && cl[1].Name = "%s" && cl[2].Name = "%s".`, cl[0].Name, cl[1].Name, cl[2].Name))
 	}
-	if cl[0].Surname != "Doe" && cl[1].Surname != "Doe" && cl[2].Surname != "Doe" {
+	if cl[0].Surname != "Doe" || cl[1].Surname != "Doe" || cl[2].Surname != "Doe" {
 		panic(fmt.Sprintf(`Expected: cl[0].Surname = "Doe" && cl[1].Surname = "Doe" && cl[2].Surname = "Doe". 
 		Received: cl[0].Surname = "%s" && cl[1].Surname = "%s" && cl[2].Surname = "%s".`, cl[0].Surname, cl[1].Surname, cl[2].Surname))
 	}
-	if cl[0].Patronymic != "Mathew" && cl[1].Patronymic != "Ivanov" && cl[2].Patronymic != "Moisha" {
+	if cl[0].Patronymic != "Mathew" || cl[1].Patronymic != "Ivanov" || cl[2].Patronymic != "Moisha" {
 		panic(fmt.Sprintf(`Expected: cl[0].Patronymic = "Andry" && cl[1].Patronymic = "Andry" && cl[2].Patronymic = "Andry". 
 		Received: cl[0].Patronymic = "%s" && cl[1].Patronymic = "%s" && cl[2].Patronymic = "%s".`, cl[0].Patronymic, cl[1].Patronymic, cl[2].Patronymic))
 	}
-	if cl[0].Age != 12 && cl[1].Age != 83 && cl[2].Age != 68 {
+	if cl[0].Age != 12 || cl[1].Age != 83 || cl[2].Age != 68 {
 		panic(fmt.Sprintf(`Expected: cl[0].Age = 12 && cl[1].Age = 83 && cl[2].Age = 68. 
 		Received: cl[0].Age = %d && cl[1].Age = %d && cl[2].Age = %d.`, cl[0].Age, cl[1].Age, cl[2].Age))
 	}
 }
 
+// Проверяет данные для запроса Имя
 func checkAnswersN(cl []*apptype.Client) {
 	checkForAll(cl)
-	if cl[0].Name != "John" && cl[1].Name != "John" && cl[2].Name != "John" {
+	if cl[0].Name != "John" || cl[1].Name != "John" || cl[2].Name != "John" {
 		panic(fmt.Sprintf(`Expected: cl[0].Name = "John" && cl[1].Name = "John" && cl[2].Name = "John". 
 		Received: cl[0].Name = "%s" && cl[1].Name = "%s" && cl[2].Name = "%s".`, cl[0].Name, cl[1].Name, cl[2].Name))
 	}
-	if cl[0].Surname != "Do" && cl[1].Surname != "Black" && cl[2].Surname != "Green" {
+	if cl[0].Surname != "Do" || cl[1].Surname != "Black" || cl[2].Surname != "Green" {
 		panic(fmt.Sprintf(`Expected: cl[0].Surname = "Do" && cl[1].Surname = "Black" && cl[2].Surname = "Green". 
 		Received: cl[0].Surname = "%s" && cl[1].Surname = "%s" && cl[2].Surname = "%s".`, cl[0].Surname, cl[1].Surname, cl[2].Surname))
 	}
-	if cl[0].Patronymic != "Mathew" && cl[1].Patronymic != "Ivanov" && cl[2].Patronymic != "Moisha" {
+	if cl[0].Patronymic != "Mathew" || cl[1].Patronymic != "Ivanov" || cl[2].Patronymic != "Moisha" {
 		panic(fmt.Sprintf(`Expected: cl[0].Patronymic = "Mathew" && cl[1].Patronymic = "Ivanov" && cl[2].Patronymic = "Moisha". 
 		Received: cl[0].Patronymic = "%s" && cl[1].Patronymic = "%s" && cl[2].Patronymic = "%s".`, cl[0].Patronymic, cl[1].Patronymic, cl[2].Patronymic))
 	}
-	if cl[0].Age != 12 && cl[1].Age != 83 && cl[2].Age != 68 {
+	if cl[0].Age != 12 || cl[1].Age != 83 || cl[2].Age != 68 {
 		panic(fmt.Sprintf(`Expected: cl[0].Age = 12 && cl[1].Age = 83 && cl[2].Age = 68. 
 		Received: cl[0].Age = %d && cl[1].Age = %d && cl[2].Age = %d.`, cl[0].Age, cl[1].Age, cl[2].Age))
 	}
@@ -153,33 +154,40 @@ func checkAnswersN(cl []*apptype.Client) {
 func testNameSurPatrAgeRequest(con *testCon) {
 	apptype.Info.Println("Тест NSPA успешно начат")
 	con.createClientsNSPA()
+	defer con.cleanSeq()
 	defer con.deleteClients()
 	clients := getReqInfo("?name=John&surname=Doe&patronymic=Andry&age=22")
 	checkAnswersNSPA(clients)
 	apptype.Info.Println("Тест NSPA успешно завершен")
 }
 
+// Тестирует запрос и ответ от сервера, если отправить имя, фамилию и отчество
 func testNameSurPartRequest(con *testCon) {
 	apptype.Info.Println("Тест NSP успешно начат")
 	con.createClientsNSP()
+	defer con.cleanSeq()
 	defer con.deleteClients()
 	clients := getReqInfo("?name=John&surname=Doe&patronymic=Andry")
 	checkAnswersNSP(clients)
 	apptype.Info.Println("Тест NSP успешно завершен")
 }
 
+// Тестирует запрос и ответ от сервера, если отправить имя и фамилию
 func testNameSurRequest(con *testCon) {
 	apptype.Info.Println("Тест NS успешно начат")
 	con.createClientsNS()
+	defer con.cleanSeq()
 	defer con.deleteClients()
 	clients := getReqInfo("?name=John&surname=Doe")
 	checkAnswersNS(clients)
 	apptype.Info.Println("Тест NS успешно завершен")
 }
 
+// Тестирует запрос и ответ от сервера, если отправить только имя
 func testNameRequest(con *testCon) {
 	apptype.Info.Println("Тест NS успешно начат")
 	con.createClientsN()
+	defer con.cleanSeq()
 	defer con.deleteClients()
 	clients := getReqInfo("?name=John")
 	checkAnswersN(clients)
@@ -202,5 +210,6 @@ func StartTestGetClients() {
 	testNameSurPartRequest(con)
 	testNameSurRequest(con)
 	testNameRequest(con)
+
 	apptype.Info.Println("Тесты с endPoint /clients | get успешно завершены")
 }

@@ -130,3 +130,10 @@ func (c *testCon) deleteClients() {
 	}
 	apptype.Debug.Println("Тестовые данные успешно удалены из бд")
 }
+
+func (c *testCon) cleanSeq() {
+	_, err := c.DB.Exec("ALTER SEQUENCE client_id_seq RESTART WITH 1")
+	if err != nil {
+		panic(err)
+	}
+}

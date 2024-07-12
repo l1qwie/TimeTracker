@@ -39,6 +39,12 @@ type Client struct {
 	Address        string `json:"address"`
 }
 
+type Task struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	TimeSpent string `json:"time_spent"`
+}
+
 func docConnect() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		docHost,

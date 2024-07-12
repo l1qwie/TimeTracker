@@ -146,3 +146,42 @@ func (c *Conn) selectName(name string) ([]*apptype.Client, error) {
 	}
 	return clients, err
 }
+
+// Ищет клиента в таблице Clients по id
+func (c *Conn) findClient(id int) (bool, error) {
+	var count int
+	err := c.DB.QueryRow("SELECT COUNT(*) FROM Clients WHERE clientid = $1", id).Scan(&count)
+	apptype.Debug.Printf("Значение ошибки после попытки найти полученный id в бд")
+	return count > 0, err
+}
+
+func (c *Conn) selectClientTasks(id int) ([]*apptype.Task, error) {
+	var (
+		count int
+		err   error
+		tasks []*apptype.Task
+		rows  *sql.Rows
+	)
+	apptype.Debug.Printf("Запрос 1. Нужно найти сколько всего задачей у клиента")
+	err = c.DB.QueryRow("SELECT COUNT(*) FROM Tasks WHERE clientid = $1", id).Scan(&count)
+
+	if err == nil {
+		apptype.Debug.Printf("Запрос 2. Задачи успешно найдены. Теперь данные из этих задач")
+		tasks = make([]*apptype.Task, count)
+		rows, err = c.DB.Query(`
+			SELECT taskid, taskname, AGE(tasktimeend, tasktimestart) AS time_interval
+			FROM Tasks
+			WHERE clientid = $1
+			ORDER BY time_interval`, id)
+
+		if err == nil {
+			i := 0
+			for rows.Next() && err == nil {
+				tasks[i] = &apptype.Task{}
+				err = rows.Scan(&tasks[i].ID, &tasks[i].Name, &tasks[i].TimeSpent)
+				i++
+			}
+		}
+	}
+	return tasks, err
+}
