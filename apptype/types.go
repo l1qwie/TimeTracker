@@ -58,6 +58,16 @@ type Change struct {
 	ValueInt int    `json:"int"`
 }
 
+type People struct {
+	Surname string `json:"surname"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+}
+
+type NewClient struct {
+	Passport string `json:"passportNumber"`
+}
+
 func docConnect() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		docHost,

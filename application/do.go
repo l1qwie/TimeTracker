@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/l1qwie/TimeTracker/apptype"
 )
@@ -114,6 +115,9 @@ func PrepareQueryToDeleteClient(con *Conn, clientid int) (string, error) {
 	return answer, err
 }
 
+// Осуществляет некоторые проверки перед началом изменений данны клиента, а именно:
+// проверяет существует ли клиент по переданному clientid, а так же существует ли
+// столбец в таблице Clients по переданному значению column
 func ChangeClient(con *Conn, ch *apptype.Change) (string, error) {
 	var (
 		answer             string
@@ -150,4 +154,22 @@ func ChangeClient(con *Conn, ch *apptype.Change) (string, error) {
 	}
 	apptype.Info.Println("Конец бизнес логики")
 	return answer, err
+}
+
+// Проверяет на коректность данные, которые были переданы и если все верно, создает нового клиента
+func AddClient(con *Conn, newcl *apptype.NewClient) (*apptype.People, error) {
+	var err error
+	apptype.Info.Println("Начало бизнес логики")
+	parts := strings.Split(newcl.Passport, " ")
+	people := new(apptype.People)
+	if len(parts) == 2 {
+		people.Name = "Ivan"
+		people.Surname = "Ivanov"
+		people.Address = "Tel-Aviv Yafo"
+		err = con.addClientDB(people, parts[0], parts[1])
+	} else {
+		err = fmt.Errorf(`couldn't divide the data of passport. Try to send a new one like this "1234 567890"`)
+	}
+	apptype.Info.Println("Конец бизнес логики")
+	return people, err
 }

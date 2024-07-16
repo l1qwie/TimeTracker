@@ -256,3 +256,12 @@ func (c *Conn) updateClientColumnStr(clientid int, column, value string) error {
 	_, err := c.DB.Exec(query, clientid, value)
 	return err
 }
+
+// Создает нового клиента в бд
+func (c *Conn) addClientDB(p *apptype.People, series, number string) error {
+	_, err := c.DB.Exec(`
+		INSERT INTO Clients 
+		(clientid, name, surname, passportseries, passportnumber, address)
+		VALUES (nextval('client_id_seq'), $1, $2, $3, $4, $5)`, p.Name, p.Surname, series, number, p.Address)
+	return err
+}

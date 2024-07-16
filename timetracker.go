@@ -6,6 +6,7 @@ import (
 	deleteclient "github.com/l1qwie/TimeTracker/tests/deleteClient"
 	getclients "github.com/l1qwie/TimeTracker/tests/getClients"
 	gettimelogs "github.com/l1qwie/TimeTracker/tests/getTimeLogs"
+	newclient "github.com/l1qwie/TimeTracker/tests/newClient"
 	timemanager "github.com/l1qwie/TimeTracker/tests/timeManager"
 )
 
@@ -24,4 +25,7 @@ func main() {
 	//
 	go servers.ChangeClient()
 	changeclient.StartTestChangeClient()
+	//
+	go servers.NewClient()
+	newclient.StartTestNewClient()
 }

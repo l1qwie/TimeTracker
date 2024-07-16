@@ -325,7 +325,6 @@ func ChangeClient() {
 						response = completed
 					}
 				}
-
 			}
 		}
 		apptype.Debug.Printf("Данные для ответа: %v", response)
@@ -333,4 +332,63 @@ func ChangeClient() {
 		c.JSON(statreq, response)
 	})
 	router.Run(":8039")
+}
+
+func NewClient() {
+	router := gin.Default()
+	router.POST("/client/new", func(c *gin.Context) {
+		apptype.Info.Println("Сервер /client/new | post запрос - запущен")
+		var (
+			statreq  int
+			response any
+		)
+		newcl := new(apptype.NewClient)
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			apptype.Debug.Println("")
+			statreq = http.StatusBadRequest
+			response = &Error{Err: err.Error()}
+
+		} else {
+			apptype.Debug.Println("")
+			err = json.Unmarshal(body, newcl)
+
+			if err != nil {
+				apptype.Debug.Println("")
+				statreq = http.StatusBadRequest
+				response = &Error{Err: err.Error()}
+
+			} else {
+				apptype.Debug.Println("")
+				apptype.Debug.Println("Данные успешно расшифрованны из запроса")
+				con := new(application.Conn)
+				con.DB, err = apptype.ConnectToDatabase()
+
+				if err != nil {
+					apptype.Debug.Printf("Не удалось подключиться к базе данных: %s", err)
+					statreq = http.StatusBadRequest
+					response = &Error{Err: err.Error()}
+
+				} else {
+					apptype.Debug.Println("Успешное подключение к базе данных")
+					people, err := application.AddClient(con, newcl)
+
+					if err != nil {
+						apptype.Debug.Println("Произошла ошибка в бизнес логике")
+						statreq = http.StatusBadRequest
+						response = &Error{Err: err.Error()}
+
+					} else {
+						apptype.Debug.Println("Бизнес логика закончила свою работу без ошибок")
+						statreq = http.StatusOK
+						response = people
+					}
+				}
+			}
+		}
+		apptype.Debug.Printf("Данные для ответа: %v", response)
+		apptype.Info.Println("Отправлен ответ из сервера /client/new | post запрос")
+		c.JSON(statreq, response)
+	})
+	router.Run(":8019")
 }
