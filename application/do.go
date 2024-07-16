@@ -53,3 +53,43 @@ func PrepareQueryToDbGetTimeLogs(con *Conn, id int) ([]*apptype.Task, error) {
 	apptype.Info.Println("Конец бизнес логики")
 	return tasks, err
 }
+
+// Проверяет существует ли клиент и его таска по переданному clientid и taskid
+// и обновляет нужный столбец в бд в зависимости от запроса (либо начало, либо конец отсчета)
+func TaskTime(con *Conn, timeManager *apptype.Time) (string, error) {
+	var (
+		err                  error
+		clientidok, taskidok bool
+		answer               string
+	)
+	apptype.Info.Println("Начало бизнес логики")
+	clientidok, err = con.findClient(timeManager.ClientId)
+	if clientidok {
+		taskidok, err = con.findTask(timeManager.TaskId)
+		if taskidok {
+			if timeManager.StartTime {
+				err = con.updateTaskStartTime(timeManager.ClientId, timeManager.TaskId)
+				if err == nil {
+					answer = "The countdown has begun"
+				}
+			} else {
+				err = con.updateTaskEndTime(timeManager.ClientId, timeManager.TaskId)
+				if err == nil {
+					answer = "The countdown has ended"
+				}
+			}
+		} else {
+			apptype.Debug.Printf("Не смог найти таску по переданному taskid")
+			if err == nil {
+				err = fmt.Errorf("couldn't find taskid. Try to send a diffrent one")
+			}
+		}
+	} else {
+		apptype.Debug.Printf("Не смог найти клиента по переданному clientid")
+		if err == nil {
+			err = fmt.Errorf("couldn't find clientid. Try to send a diffrent one")
+		}
+	}
+	apptype.Info.Println("Конец бизнес логики")
+	return answer, err
+}

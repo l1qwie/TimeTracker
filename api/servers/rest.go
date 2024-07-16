@@ -1,6 +1,8 @@
 package servers
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -22,7 +24,7 @@ type Error struct {
 // @Param 	patronymic	query		string		false 	"Patronymic"
 // @Param   age      	query    	integer     false  	"Age"
 // @Success 200 {object} []*apptype.Client
-// @Failure 400 {object} Error
+// @Failure 400 {object} *Error
 // @Router /client [get]
 func GetClientsInfo() {
 	router := gin.Default()
@@ -79,7 +81,7 @@ func GetClientsInfo() {
 // @Produce json
 // @Param  id   path     string     true     "ID"
 // @Success 200 {object} []*apptype.Tasks
-// @Failure 400 {object} Error
+// @Failure 400 {object} *Error
 // @Router /client/{id}/time-logs [get]
 func GetTimeLogs() {
 	router := gin.Default()
@@ -135,4 +137,68 @@ func GetTimeLogs() {
 		c.JSON(statreq, response)
 	})
 	router.Run(":8099")
+}
+
+// @Summary Начало отсчета времени
+// @Description Начало отсчета времени для задачи клиента
+// @Accept  json
+// @Produce json
+// @Param  clientid   query     string     true     "ClientId"
+// @Param  taskid 	  query	    string	   true	    "TaskId"
+// @Success 200 {object} string
+// @Failure 400 {object} *Error
+// @Router /client/tasks/start [post]
+func StartTimeManager() {
+	router := gin.Default()
+	router.POST("/client/tasks/timeManager", func(c *gin.Context) {
+		apptype.Info.Println("Сервер /client/tasks/timeManager | post запрос - запущен")
+		var (
+			statreq  int
+			response any
+			err      error
+		)
+		timemanager := new(apptype.Time)
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			statreq = http.StatusBadRequest
+			response = &Error{Err: err.Error()}
+		} else {
+			apptype.Debug.Println("Данные успешно получены из запроса")
+			err = json.Unmarshal(body, &timemanager)
+			if err != nil {
+				apptype.Debug.Println("Не удалось успешно расшифровать данные из запроса")
+				statreq = http.StatusBadRequest
+				response = &Error{Err: err.Error()}
+			} else {
+				apptype.Debug.Println("Данные успешно расшифрованны из запроса")
+				con := new(application.Conn)
+				con.DB, err = apptype.ConnectToDatabase()
+
+				if err != nil {
+					apptype.Debug.Printf("Не удалось подключиться к базе данных: %s", err)
+					statreq = http.StatusBadRequest
+					response = &Error{Err: err.Error()}
+
+				} else {
+					apptype.Debug.Println("Успешное подключение к базе данных")
+					completed, err := application.TaskTime(con, timemanager)
+
+					if err != nil {
+						apptype.Debug.Println("Произошла ошибка в бизнес логике")
+						statreq = http.StatusBadRequest
+						response = &Error{Err: err.Error()}
+
+					} else {
+						apptype.Debug.Println("Бизнес логика закончила свою работу без ошибок")
+						statreq = http.StatusOK
+						response = completed
+					}
+				}
+			}
+		}
+		apptype.Debug.Printf("Данные для ответа: %v", response)
+		apptype.Info.Println("Отправлен ответ из сервера /client/tasks/timeManager | get запрос")
+		c.JSON(statreq, response)
+	})
+	router.Run(":8079")
 }

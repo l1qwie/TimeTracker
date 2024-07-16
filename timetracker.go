@@ -4,6 +4,7 @@ import (
 	"github.com/l1qwie/TimeTracker/api/servers"
 	getclients "github.com/l1qwie/TimeTracker/tests/getClients"
 	gettimelogs "github.com/l1qwie/TimeTracker/tests/getTimeLogs"
+	timemanager "github.com/l1qwie/TimeTracker/tests/timeManager"
 )
 
 func main() {
@@ -12,4 +13,7 @@ func main() {
 	//
 	go servers.GetTimeLogs()
 	gettimelogs.StartTestGetTimeLogs()
+	//
+	go servers.StartTimeManager()
+	timemanager.StartTestTimeManager()
 }

@@ -155,6 +155,7 @@ func (c *Conn) findClient(id int) (bool, error) {
 	return count > 0, err
 }
 
+// Выбирает все таски определенного клиента (id)
 func (c *Conn) selectClientTasks(id int) ([]*apptype.Task, error) {
 	var (
 		count int
@@ -184,4 +185,23 @@ func (c *Conn) selectClientTasks(id int) ([]*apptype.Task, error) {
 		}
 	}
 	return tasks, err
+}
+
+// Обновляет данные для начала отсчета вреемени
+func (c *Conn) updateTaskStartTime(clientid int, taskid int) error {
+	_, err := c.DB.Exec("UPDATE Tasks SET tasktimestart = CURRENT_TIMESTAMP WHERE taskid = $1 AND clientid = $2", taskid, clientid)
+	return err
+}
+
+// Ищет нужную таску по переданному taskid
+func (c *Conn) findTask(taskid int) (bool, error) {
+	var count int
+	err := c.DB.QueryRow("SELECT COUNT(*) FROM Tasks WHERE taskid = $1", taskid).Scan(&count)
+	return count > 0, err
+}
+
+// Обновляет данные для окончания отсчета времени
+func (c *Conn) updateTaskEndTime(clientid int, taskid int) error {
+	_, err := c.DB.Exec("UPDATE Tasks SET tasktimeend = CURRENT_TIMESTAMP WHERE taskid = $1 AND clientid = $2", taskid, clientid)
+	return err
 }

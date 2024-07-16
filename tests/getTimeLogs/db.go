@@ -126,7 +126,7 @@ func (c *testCon) deleteSeq() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = c.DB.Exec("ALTER SEQUENCE client_id_seq RESTART WITH 1;")
+	_, err = c.DB.Exec("ALTER SEQUENCE client_id_seq RESTART WITH 1")
 	if err != nil {
 		panic(err)
 	}

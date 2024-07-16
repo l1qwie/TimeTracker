@@ -45,6 +45,12 @@ type Task struct {
 	TimeSpent string `json:"time_spent"`
 }
 
+type Time struct {
+	ClientId  int  `json:"clientid"`
+	TaskId    int  `json:"taskid"`
+	StartTime bool `json:"start_time"`
+}
+
 func docConnect() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		docHost,
