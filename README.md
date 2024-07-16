@@ -48,7 +48,7 @@
     go mod download
 
 4. Скомпилирейте контейнер в Docker:
-    ``bash
+    ```bash
     make rb
     или
     docker build . -t timetracker-app
