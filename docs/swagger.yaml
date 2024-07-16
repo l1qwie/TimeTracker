@@ -1,0 +1,220 @@
+definitions:
+  apptype.Client:
+    properties:
+      address:
+        type: string
+      age:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      passport_number:
+        type: string
+      passport_series:
+        type: string
+      patronymic:
+        type: string
+      surname:
+        type: string
+    type: object
+  apptype.People:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      surname:
+        type: string
+    type: object
+  apptype.Task:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      time_spent:
+        type: string
+    type: object
+  servers.Error:
+    properties:
+      error:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /client:
+    get:
+      consumes:
+      - application/json
+      description: Returned the information about all clients
+      parameters:
+      - description: Name
+        in: query
+        name: name
+        type: string
+      - description: Surname
+        in: query
+        name: surname
+        type: string
+      - description: Patronymic
+        in: query
+        name: patronymic
+        type: string
+      - description: Age
+        in: query
+        name: age
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apptype.Client'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/servers.Error'
+      summary: Get Clients Info
+  /client/{id}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Полное удаление задач клиента и самого клиента
+      parameters:
+      - description: Id
+        in: path
+        name: clientid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/servers.Error'
+      summary: Удаление клиента из базы данных
+  /client/{id}/time-logs:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает трудозатраты по пользователю за период
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apptype.Task'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/servers.Error'
+      summary: Трудозатраты клиентов
+  /client/change:
+    put:
+      consumes:
+      - application/json
+      description: Изменение данных клиента в базе данных
+      parameters:
+      - description: ClientId
+        in: query
+        name: clientid
+        required: true
+        type: integer
+      - description: Column
+        in: query
+        name: column
+        required: true
+        type: string
+      - description: ValueInt
+        in: query
+        name: valueint
+        required: true
+        type: integer
+      - description: ValueStr
+        in: query
+        name: valuestr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/servers.Error'
+      summary: Изменение данных клиента
+  /client/new:
+    post:
+      consumes:
+      - application/json
+      description: Добавление нового клиента в базу данных
+      parameters:
+      - description: passport
+        in: query
+        name: passport
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apptype.People'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/servers.Error'
+      summary: Добавление клиента
+  /client/tasks/timeManager:
+    post:
+      consumes:
+      - application/json
+      description: Начало отсчета времени для задачи клиента
+      parameters:
+      - description: ClientId
+        in: query
+        name: clientid
+        required: true
+        type: string
+      - description: TaskId
+        in: query
+        name: taskid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/servers.Error'
+      summary: Начало отсчета времени
+swagger: "2.0"
