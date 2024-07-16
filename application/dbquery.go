@@ -2,6 +2,7 @@ package application
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/l1qwie/TimeTracker/apptype"
 	_ "github.com/lib/pq"
@@ -151,7 +152,6 @@ func (c *Conn) selectName(name string) ([]*apptype.Client, error) {
 func (c *Conn) findClient(id int) (bool, error) {
 	var count int
 	err := c.DB.QueryRow("SELECT COUNT(*) FROM Clients WHERE clientid = $1", id).Scan(&count)
-	apptype.Debug.Printf("Значение ошибки после попытки найти полученный id в бд")
 	return count > 0, err
 }
 
@@ -203,5 +203,56 @@ func (c *Conn) findTask(taskid int) (bool, error) {
 // Обновляет данные для окончания отсчета времени
 func (c *Conn) updateTaskEndTime(clientid int, taskid int) error {
 	_, err := c.DB.Exec("UPDATE Tasks SET tasktimeend = CURRENT_TIMESTAMP WHERE taskid = $1 AND clientid = $2", taskid, clientid)
+	return err
+}
+
+// Окончание транзакции в зависимости от значения переданной переменной
+func (c *Conn) endTransacttion(err error) {
+	if err != nil {
+		_, err2 := c.DB.Exec("ROLLBACK")
+		if err2 != nil {
+			apptype.Debug.Printf("IMPOSSIBLE TO END THE TRANSACTION! :%s", err2)
+		}
+	} else {
+		_, err2 := c.DB.Exec("COMMIT")
+		if err2 != nil {
+			apptype.Debug.Printf("IMPOSSIBLE TO END THE TRANSACTION! :%s", err2)
+		}
+	}
+}
+
+// Удаляет все таски клиента, а потом удаляет и самого клиента
+func (c *Conn) deleteClientDB(clientid int) error {
+	_, err := c.DB.Exec("BEGIN ISOLATION LEVEL REPEATABLE READ")
+	defer c.endTransacttion(err)
+	if err == nil {
+		_, err = c.DB.Exec("DELETE FROM Tasks WHERE clientid = $1", clientid)
+		if err == nil {
+			_, err = c.DB.Exec("DELETE FROM Clients WHERE clientid = $1", clientid)
+		}
+	}
+	return err
+}
+
+// Проверяет существует ли переданный столбец в таблице Clients
+func (c *Conn) findColumn(column string) (bool, error) {
+	var ok bool
+	query := "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'clients' AND column_name = $1)"
+	err := c.DB.QueryRow(query, column).Scan(&ok)
+	apptype.Debug.Println("Query:", query, "Column:", column, "Result:", ok)
+	return ok, err
+}
+
+// Обновляет данные в таблице Clients только для типа int
+func (c *Conn) updateClientColumnInt(clientid int, column string, value int) error {
+	query := fmt.Sprintf("UPDATE Clients SET %s = $2 WHERE clientid = $1", column)
+	_, err := c.DB.Exec(query, clientid, value)
+	return err
+}
+
+// Обновляет данные в таблице Clients только для типа string
+func (c *Conn) updateClientColumnStr(clientid int, column, value string) error {
+	query := fmt.Sprintf("UPDATE Clients SET %s = $2 WHERE clientid = $1", column)
+	_, err := c.DB.Exec(query, clientid, value)
 	return err
 }

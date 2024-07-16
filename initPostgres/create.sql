@@ -12,8 +12,8 @@ CREATE TABLE Clients (
     surname varchar(255) DEFAULT '',
     patronymic varchar(255) DEFAULT '',
     age int DEFAULT 0,
-    passportnumber varchar(255) DEFAULT '',
     passportseries varchar(255) DEFAULT '',
+    passportnumber varchar(255) DEFAULT '',
     address varchar(255) DEFAULT ''
 );
 

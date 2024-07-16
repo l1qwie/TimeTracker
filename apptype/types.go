@@ -51,6 +51,13 @@ type Time struct {
 	StartTime bool `json:"start_time"`
 }
 
+type Change struct {
+	ClientId int    `json:"clientid"`
+	Column   string `json:"column"`
+	ValueStr string `json:"value_str"`
+	ValueInt int    `json:"int"`
+}
+
 func docConnect() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		docHost,

@@ -93,3 +93,61 @@ func TaskTime(con *Conn, timeManager *apptype.Time) (string, error) {
 	apptype.Info.Println("Конец бизнес логики")
 	return answer, err
 }
+
+// Проверяет сущестует такой клиент, который пришел и если да, то удаляет его
+func PrepareQueryToDeleteClient(con *Conn, clientid int) (string, error) {
+	var answer string
+	apptype.Info.Println("Начало бизнес логики")
+	ok, err := con.findClient(clientid)
+	if ok {
+		err = con.deleteClientDB(clientid)
+		if err == nil {
+			answer = fmt.Sprintf("The client %d has been successfuly deleted", clientid)
+		}
+	} else {
+		apptype.Debug.Printf("Не смог найти клиента по переданному clientid")
+		if err == nil {
+			err = fmt.Errorf("couldn't find clientid. Try to send a diffrent one")
+		}
+	}
+	apptype.Info.Println("Конец бизнес логики")
+	return answer, err
+}
+
+func ChangeClient(con *Conn, ch *apptype.Change) (string, error) {
+	var (
+		answer             string
+		clientok, columnok bool
+		err                error
+	)
+	apptype.Info.Println("Начало бизнес логики")
+	clientok, err = con.findClient(ch.ClientId)
+	if clientok {
+		columnok, err = con.findColumn(ch.Column)
+		if columnok {
+			if ch.Column == "age" {
+				err = con.updateClientColumnInt(ch.ClientId, ch.Column, ch.ValueInt)
+				if err == nil {
+					answer = fmt.Sprintf("The client's {%d} %s was changed to %d", ch.ClientId, ch.Column, ch.ValueInt)
+				}
+			} else {
+				err = con.updateClientColumnStr(ch.ClientId, ch.Column, ch.ValueStr)
+				if err == nil {
+					answer = fmt.Sprintf("The client's {%d} %s was changed to %s", ch.ClientId, ch.Column, ch.ValueStr)
+				}
+			}
+		} else {
+			apptype.Debug.Printf("Не смог найти переданое название столбца в таблице бд")
+			if err == nil {
+				err = fmt.Errorf("couldn't find column_name. Try to send a diffrent one")
+			}
+		}
+	} else {
+		apptype.Debug.Printf("Не смог найти клиента по переданному clientid")
+		if err == nil {
+			err = fmt.Errorf("couldn't find clientid. Try to send a diffrent one")
+		}
+	}
+	apptype.Info.Println("Конец бизнес логики")
+	return answer, err
+}

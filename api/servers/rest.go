@@ -15,8 +15,8 @@ type Error struct {
 	Err string `json:"error"`
 }
 
-// @Summary Информация о пользователях
-// @Description Возвращает данные о найденных пользователях
+// @Summary Информация о клиентахх
+// @Description Возвращает данные о найденных клиентах
 // @Accept  json
 // @Produce json
 // @Param   name     	query    	string     	false  	"Name"
@@ -197,8 +197,140 @@ func StartTimeManager() {
 			}
 		}
 		apptype.Debug.Printf("Данные для ответа: %v", response)
-		apptype.Info.Println("Отправлен ответ из сервера /client/tasks/timeManager | get запрос")
+		apptype.Info.Println("Отправлен ответ из сервера /client/tasks/timeManager | post запрос")
 		c.JSON(statreq, response)
 	})
 	router.Run(":8079")
+}
+
+// @Summary Удаление клиента из базы данных
+// @Description Полное удаление задач клиента и самого клиента
+// @Accept  json
+// @Produce json
+// @Param  clientid   path     string     true     "Id"
+// @Success 200 {object} string
+// @Failure 400 {object} *Error
+// @Router /client/{id}/delete [delete]
+func DeleteClient() {
+	router := gin.Default()
+	router.DELETE("/client/:id/delete", func(c *gin.Context) {
+		apptype.Info.Println("Сервер /client/:id/delete | delete запрос - запущен")
+		var (
+			statreq  int
+			response any
+			err      error
+		)
+		id := c.Param("id")
+		if id == "" {
+			statreq = http.StatusBadRequest
+			response = &Error{Err: "there's no id in your request"}
+
+		} else {
+			apptype.Info.Printf("Полученный Id: %s", id)
+			apptype.Debug.Println("Данные успешно получены из запроса")
+			con := new(application.Conn)
+			con.DB, err = apptype.ConnectToDatabase()
+			if err != nil {
+				apptype.Debug.Printf("Не удалось подключиться к базе данных: %s", err)
+				statreq = http.StatusBadRequest
+				response = &Error{Err: err.Error()}
+
+			} else {
+				apptype.Debug.Println("Успешное подключение к базе данных")
+				clientid, err := strconv.Atoi(id)
+
+				if err != nil {
+					apptype.Debug.Println("Не удалось форматировать string к int")
+					statreq = http.StatusBadRequest
+					response = &Error{Err: err.Error()}
+
+				} else {
+					answer, err := application.PrepareQueryToDeleteClient(con, clientid)
+
+					if err != nil {
+						apptype.Debug.Println("Ошибка во время выполнения бизнес логики")
+						statreq = http.StatusBadRequest
+						response = &Error{Err: err.Error()}
+
+					} else {
+						statreq = http.StatusOK
+						response = answer
+					}
+				}
+			}
+		}
+		apptype.Debug.Printf("Данные для ответа: %v", response)
+		apptype.Info.Println("Отправлен ответ из сервера /client/:id/delete | delete запрос")
+		c.JSON(statreq, response)
+	})
+	router.Run(":8059")
+}
+
+// @Summary Изменение данныз клиента
+// @Description Полное удаление задач клиента и самого клиента
+// @Accept  json
+// @Produce json
+// @Param  clientid   query     int        true     "ClientId"
+// @Param  column 	  query	    string	   true	    "Column"
+// @Param  valueint   query 	int 	   true 	"ValueInt"
+// @Param  valuestr   query 	string 	   true 	"ValueStr"
+// @Success 200 {object} string
+// @Failure 400 {object} *Error
+// @Router /client/change [put]
+func ChangeClient() {
+	router := gin.Default()
+	router.PUT("/client/change", func(c *gin.Context) {
+		apptype.Info.Println("Сервер /client/change | put запрос - запущен")
+		var (
+			statreq  int
+			response any
+			err      error
+		)
+		changes := new(apptype.Change)
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			statreq = http.StatusBadRequest
+			response = &Error{Err: err.Error()}
+
+		} else {
+			apptype.Debug.Println("Данные успешно получены из запроса")
+			err = json.Unmarshal(body, &changes)
+
+			if err != nil {
+				apptype.Debug.Println("Не удалось успешно расшифровать данные из запроса")
+				statreq = http.StatusBadRequest
+				response = &Error{Err: err.Error()}
+			} else {
+				apptype.Debug.Println("Данные успешно расшифрованны из запроса")
+				con := new(application.Conn)
+				con.DB, err = apptype.ConnectToDatabase()
+
+				if err != nil {
+					apptype.Debug.Printf("Не удалось подключиться к базе данных: %s", err)
+					statreq = http.StatusBadRequest
+					response = &Error{Err: err.Error()}
+
+				} else {
+					apptype.Debug.Println("Успешное подключение к базе данных")
+					completed, err := application.ChangeClient(con, changes)
+
+					if err != nil {
+						apptype.Debug.Println("Произошла ошибка в бизнес логике")
+						statreq = http.StatusBadRequest
+						response = &Error{Err: err.Error()}
+
+					} else {
+						apptype.Debug.Println("Бизнес логика закончила свою работу без ошибок")
+						statreq = http.StatusOK
+						response = completed
+					}
+				}
+
+			}
+		}
+		apptype.Debug.Printf("Данные для ответа: %v", response)
+		apptype.Info.Println("Отправлен ответ из сервера /client/change | put запрос")
+		c.JSON(statreq, response)
+	})
+	router.Run(":8039")
 }
